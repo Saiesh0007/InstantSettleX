@@ -536,7 +536,15 @@ Counterparty Risk	High	None
 Intermediaries	Many	Minimal
 Operational Costs	High	Reduced
 
+Images
 
+![image alt](https://github.com/Saiesh0007/InstantSettleX/blob/0891618221e4e2f51a17e40a7bf370d762cc604c/1.PNG)
+![image alt](https://github.com/Saiesh0007/InstantSettleX/blob/0891618221e4e2f51a17e40a7bf370d762cc604c/2.PNG)
+![image alt](https://github.com/Saiesh0007/InstantSettleX/blob/0891618221e4e2f51a17e40a7bf370d762cc604c/3.PNG)
+![image alt](https://github.com/Saiesh0007/InstantSettleX/blob/0891618221e4e2f51a17e40a7bf370d762cc604c/4.PNG)
+![image alt](https://github.com/Saiesh0007/InstantSettleX/blob/0891618221e4e2f51a17e40a7bf370d762cc604c/5.PNG)
+![image alt](https://github.com/Saiesh0007/InstantSettleX/blob/0891618221e4e2f51a17e40a7bf370d762cc604c/6.PNG)
+![image alt](https://github.com/Saiesh0007/InstantSettleX/blob/0891618221e4e2f51a17e40a7bf370d762cc604c/7.PNG)
 
 ---
 
