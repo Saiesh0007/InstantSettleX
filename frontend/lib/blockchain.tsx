@@ -2,8 +2,8 @@
 
 import { createContext, useContext, useState, useCallback, type ReactNode, useEffect } from "react"
 import { BrowserProvider, Contract, formatEther, parseEther } from "ethers"
-import { settlementABI } from "./blockchain/abi"
-import { settlementAddress, stockTokenAddress } from "./blockchain/contracts"
+import { settlementABI } from "../../blockchain/lib/blockchain/abi"
+import { settlementAddress, stockTokenAddress } from "../../blockchain/lib/blockchain/contracts"
 
 interface WalletState {
   address: string | null
