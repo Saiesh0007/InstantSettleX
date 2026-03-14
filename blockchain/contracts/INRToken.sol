@@ -7,7 +7,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 contract INRToken is ERC20, Ownable {
     constructor() ERC20("Indian Rupee Token", "INR") Ownable(msg.sender) {}
 
-    function mint(address to, uint256 amount) external onlyOwner {
+    function mint(address to, uint32 amount) external onlyOwner {
         _mint(to, amount);
     }
 }

@@ -15,7 +15,7 @@ contract StockToken is ERC20, Ownable {
         stockSymbol = _stockSymbol;
     }
 
-    function mint(address to, uint256 amount) external onlyOwner {
+    function mint(address to, uint32 amount) external onlyOwner {
         _mint(to, amount);
     }
 }

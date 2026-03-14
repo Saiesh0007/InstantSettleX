@@ -1,87 +1,92 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { useBlockchain } from "@/lib/blockchain"
-import {
-  ArrowUpRight,
-  ArrowDownRight,
-  Clock,
-  Zap,
-  TrendingUp,
-  Droplets,
-  Activity,
-} from "lucide-react"
-import {
-  Area,
-  AreaChart,
-  Bar,
-  BarChart,
-  ResponsiveContainer,
-  XAxis,
-  YAxis,
-  Tooltip,
-  CartesianGrid,
-} from "recharts"
+import { ArrowUpRight, ArrowDownRight, Clock, Zap, TrendingUp, Droplets, Activity } from "lucide-react"
 
-const volumeData = [
-  { time: "9:00", volume: 2400 },
-  { time: "10:00", volume: 4200 },
-  { time: "11:00", volume: 5800 },
-  { time: "12:00", volume: 3200 },
-  { time: "13:00", volume: 6100 },
-  { time: "14:00", volume: 7200 },
-  { time: "15:00", volume: 8400 },
-]
+interface Trade {
+  exchange: string
+  stock: string
+  quantity: number
+  price: number
+  timestamp: number
+}
 
-const settlementComparison = [
-  { method: "T+1", time: 86400, label: "Traditional" },
-  { method: "Blockchain", time: 4, label: "InstantSettleX" },
-]
+interface Arbitrage {
+  buyPrice: number
+  sellPrice: number
+  profitPerShare: number
+  quantity: number
+  timestamp: number
+}
+
+interface Settlement {
+  hash: string
+  block: number
+  trades: number
+  timestamp: number
+}
 
 export default function DashboardPage() {
-  const { trades } = useBlockchain()
+  const [liveTrades, setLiveTrades] = useState<Trade[]>([])
+  const [arbitrages, setArbitrages] = useState<Arbitrage[]>([])
+  const [settlements, setSettlements] = useState<Settlement[]>([])
 
-  const settledTrades = trades.filter((t) => t.status === "settled")
-  const avgSettlementTime =
-    settledTrades.length > 0
-      ? settledTrades.reduce((acc, t) => acc + (t.settlementTime || 3.5), 0) / settledTrades.length
-      : 3.5
+  useEffect(() => {
+    const sse = new EventSource("http://localhost:5000/api/events")
+    
+    sse.addEventListener("nse_trade", (e) => {
+      const trade = JSON.parse(e.data)
+      setLiveTrades(prev => [trade, ...prev].slice(0, 50))
+    })
+
+    sse.addEventListener("bse_trade", (e) => {
+      const trade = JSON.parse(e.data)
+      setLiveTrades(prev => [trade, ...prev].slice(0, 50))
+    })
+
+    sse.addEventListener("arbitrage", (e) => {
+      const arb = JSON.parse(e.data)
+      setArbitrages(prev => [arb, ...prev].slice(0, 20))
+    })
+
+    sse.addEventListener("settlement", (e) => {
+      const data = JSON.parse(e.data)
+      setSettlements(prev => [data, ...prev].slice(0, 20))
+    })
+
+    return () => sse.close()
+  }, [])
 
   const metrics = [
     {
-      title: "Total Trades Today",
-      value: trades.length.toString(),
-      change: "+12%",
-      trend: "up",
+      title: "Active Settlements",
+      value: settlements.length.toString(),
       icon: Activity,
     },
     {
-      title: "Avg Settlement Time",
-      value: `${avgSettlementTime.toFixed(1)}s`,
-      change: "-0.3s",
-      trend: "up",
-      icon: Zap,
+      title: "Arbitrage Opportunities",
+      value: arbitrages.length.toString(),
+      icon: TrendingUp,
     },
     {
-      title: "Capital Locked (Traditional)",
-      value: "₹2.4Cr",
-      description: "T+1 Settlement",
+      title: "Capital Locked (T+1)",
+      value: `₹${(liveTrades.reduce((acc, t) => acc + (t.price * t.quantity), 0)).toLocaleString()}`,
+      description: "Would be locked for 24h",
       icon: Clock,
-      highlight: false,
     },
     {
-      title: "Capital Locked (Blockchain)",
-      value: "₹0",
-      description: "Instant Settlement",
+      title: "Total Settled via Blockchain",
+      value: `₹${(settlements.length * 150000).toLocaleString()}`, // rough avg
+      description: "Instantly settled (T+0)",
       icon: Zap,
       highlight: true,
     },
     {
-      title: "Liquidity Pool Size",
-      value: "₹50Cr",
-      change: "+5.2%",
-      trend: "up",
+      title: "Liquidity Pool Active",
+      value: "Yes",
+      description: "Funding Cross-Exchange Atomic settlement",
       icon: Droplets,
     },
   ]
@@ -90,14 +95,14 @@ export default function DashboardPage() {
     <div className="space-y-6">
       {/* Page Header */}
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Cross-Exchange Settlement Simulator</h1>
         <p className="text-muted-foreground">
-          Real-time overview of blockchain settlement performance
+          Real-time orchestration between NSE and BSE simulated engines via smart contracts.
         </p>
       </div>
 
       {/* Metrics Grid */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
         {metrics.map((metric) => (
           <Card
             key={metric.title}
@@ -117,19 +122,6 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{metric.value}</div>
-              {metric.change && (
-                <div className="flex items-center gap-1 text-xs">
-                  {metric.trend === "up" ? (
-                    <ArrowUpRight className="h-3 w-3 text-primary" />
-                  ) : (
-                    <ArrowDownRight className="h-3 w-3 text-destructive" />
-                  )}
-                  <span className={metric.trend === "up" ? "text-primary" : "text-destructive"}>
-                    {metric.change}
-                  </span>
-                  <span className="text-muted-foreground">vs yesterday</span>
-                </div>
-              )}
               {metric.description && (
                 <p className="text-xs text-muted-foreground mt-1">{metric.description}</p>
               )}
@@ -138,179 +130,95 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      {/* Charts Row */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Trade Volume Chart */}
-        <Card className="border-border/50">
+      {/* Simulation Feeds */}
+      <div className="grid gap-6 lg:grid-cols-3">
+        {/* Live Trades Feed */}
+        <Card className="col-span-1 border-border/50">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-primary" />
-              Trade Volume
-            </CardTitle>
-            <CardDescription>Hourly trading activity</CardDescription>
+            <div className="flex items-center justify-between">
+              <CardTitle>Live Order Feed</CardTitle>
+              <Badge variant="outline" className="animate-pulse bg-green-500/10 text-green-500 border-green-500/20">Live</Badge>
+            </div>
           </CardHeader>
-          <CardContent>
-            <div className="h-[280px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={volumeData}>
-                  <defs>
-                    <linearGradient id="volumeGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="oklch(0.7 0.18 160)" stopOpacity={0.3} />
-                      <stop offset="100%" stopColor="oklch(0.7 0.18 160)" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.25 0.01 260)" />
-                  <XAxis
-                    dataKey="time"
-                    stroke="oklch(0.65 0 0)"
-                    fontSize={12}
-                    tickLine={false}
-                    axisLine={false}
-                  />
-                  <YAxis
-                    stroke="oklch(0.65 0 0)"
-                    fontSize={12}
-                    tickLine={false}
-                    axisLine={false}
-                    tickFormatter={(value) => `${value / 1000}k`}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "oklch(0.14 0.01 260)",
-                      border: "1px solid oklch(0.25 0.01 260)",
-                      borderRadius: "8px",
-                      color: "oklch(0.95 0 0)",
-                    }}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="volume"
-                    stroke="oklch(0.7 0.18 160)"
-                    strokeWidth={2}
-                    fill="url(#volumeGradient)"
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
+          <CardContent className="h-[400px] overflow-y-auto">
+            <div className="space-y-4">
+              {liveTrades.length === 0 && <p className="text-sm text-muted-foreground">Waiting for trades...</p>}
+              {liveTrades.map((t, i) => (
+                <div key={i} className="flex justify-between items-center p-3 rounded-lg border bg-card text-sm">
+                  <div>
+                    <span className={`font-bold ${t.exchange === 'NSE' ? 'text-blue-500' : 'text-orange-500'}`}>{t.exchange}</span>
+                    <span className="ml-2">{t.stock}</span>
+                  </div>
+                  <div>
+                    {t.quantity} @ ₹{t.price}
+                  </div>
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>
 
-        {/* Settlement Comparison */}
-        <Card className="border-border/50">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Zap className="h-5 w-5 text-primary" />
-              Settlement Time Comparison
-            </CardTitle>
-            <CardDescription>Traditional T+1 vs Blockchain instant settlement</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[280px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={settlementComparison} layout="vertical">
-                  <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.25 0.01 260)" />
-                  <XAxis
-                    type="number"
-                    stroke="oklch(0.65 0 0)"
-                    fontSize={12}
-                    tickLine={false}
-                    axisLine={false}
-                    tickFormatter={(value) => (value >= 3600 ? `${value / 3600}h` : `${value}s`)}
-                  />
-                  <YAxis
-                    dataKey="label"
-                    type="category"
-                    stroke="oklch(0.65 0 0)"
-                    fontSize={12}
-                    tickLine={false}
-                    axisLine={false}
-                    width={100}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "oklch(0.14 0.01 260)",
-                      border: "1px solid oklch(0.25 0.01 260)",
-                      borderRadius: "8px",
-                      color: "oklch(0.95 0 0)",
-                    }}
-                    formatter={(value: number) =>
-                      value >= 3600 ? `${(value / 3600).toFixed(0)} hours` : `${value} seconds`
-                    }
-                  />
-                  <Bar
-                    dataKey="time"
-                    radius={[0, 4, 4, 0]}
-                    fill="oklch(0.7 0.18 160)"
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Arbitrage & Settlement */}
+        <div className="col-span-2 space-y-6">
+          <Card className="border-border/50">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="h-5 w-5 text-primary" />
+                Arbitrage Detection
+              </CardTitle>
+              <CardDescription>Matching cross-exchange spreads</CardDescription>
+            </CardHeader>
+            <CardContent className="h-[150px] overflow-y-auto">
+              {arbitrages.length === 0 && <p className="text-sm text-muted-foreground">Scanning for price discrepancies...</p>}
+              <div className="space-y-2">
+                {arbitrages.map((arb, i) => (
+                  <div key={i} className="flex justify-between items-center p-3 rounded-lg bg-primary/10 border border-primary/20 text-sm">
+                    <div className="flex flex-col">
+                      <span className="text-primary font-medium">Arbitrage Found</span>
+                      <span className="text-xs text-muted-foreground">Buy NSE ₹{arb.buyPrice} → Sell BSE ₹{arb.sellPrice}</span>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-bold text-green-500">+ ₹{arb.profitPerShare * arb.quantity}</div>
+                      <div className="text-xs text-muted-foreground">{arb.quantity} shares</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-border/50">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Zap className="h-5 w-5 text-primary" />
+                Atomic Batch Settlements
+              </CardTitle>
+              <CardDescription>Blockchain Tx History (Funded via Liquidity Pool)</CardDescription>
+            </CardHeader>
+            <CardContent className="h-[150px] overflow-y-auto">
+              {settlements.length === 0 && <p className="text-sm text-muted-foreground">Waiting for batch settlements...</p>}
+              <div className="space-y-2">
+                {settlements.map((s, i) => (
+                  <div key={i} className="flex justify-between items-center p-3 rounded-lg border text-sm">
+                    <div className="flex flex-col">
+                      <span className="font-mono text-xs">{s.hash.slice(0, 10)}...{s.hash.slice(-8)}</span>
+                      <span className="text-xs text-muted-foreground">Block: {s.block}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
+                        {s.trades} Trades Batched
+                      </Badge>
+                      <Badge variant="default" className="bg-green-500">
+                        Settled
+                      </Badge>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
-
-      {/* Settlement Flow Comparison */}
-      <Card className="border-border/50">
-        <CardHeader>
-          <CardTitle>Settlement Flow Comparison</CardTitle>
-          <CardDescription>
-            How blockchain revolutionizes stock settlement
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-6 md:grid-cols-2">
-            {/* Traditional Flow */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-2">
-                <Badge variant="outline" className="text-destructive border-destructive/30">
-                  Traditional
-                </Badge>
-                <span className="text-sm text-muted-foreground">T+1 Settlement</span>
-              </div>
-              <div className="flex items-center gap-2">
-                {["Trade", "Clearing", "Netting", "Settlement"].map((step, i) => (
-                  <div key={step} className="flex items-center gap-2">
-                    <div className="flex h-10 items-center justify-center rounded-lg border border-border bg-secondary px-3 text-sm">
-                      {step}
-                    </div>
-                    {i < 3 && (
-                      <div className="h-px w-4 bg-border" />
-                    )}
-                  </div>
-                ))}
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Capital locked for 24+ hours during settlement process
-              </p>
-            </div>
-
-            {/* Blockchain Flow */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-2">
-                <Badge className="bg-primary text-primary-foreground">
-                  Blockchain
-                </Badge>
-                <span className="text-sm text-muted-foreground">Instant Settlement</span>
-              </div>
-              <div className="flex items-center gap-2">
-                {["Trade", "Smart Contract", "Instant Settlement"].map((step, i) => (
-                  <div key={step} className="flex items-center gap-2">
-                    <div className="flex h-10 items-center justify-center rounded-lg border border-primary/30 bg-primary/10 px-3 text-sm text-primary">
-                      {step}
-                    </div>
-                    {i < 2 && (
-                      <Zap className="h-4 w-4 text-primary" />
-                    )}
-                  </div>
-                ))}
-              </div>
-              <p className="text-sm text-primary">
-                Atomic settlement in 3-5 seconds with zero counterparty risk
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   )
 }

@@ -14,7 +14,7 @@ const optional = (key, defaultValue) => process.env[key] || defaultValue;
 
 const env = {
   NODE_ENV: optional('NODE_ENV', 'development'),
-  PORT: parseInt(optional('PORT', '3000')),
+  PORT: parseInt(optional('PORT', '5000')),
   API_VERSION: optional('API_VERSION', 'v1'),
   isProduction: process.env.NODE_ENV === 'production',
   isDevelopment: process.env.NODE_ENV !== 'production',
@@ -76,7 +76,7 @@ const env = {
   },
 
   cors: {
-    origins: optional('CORS_ORIGINS', 'http://localhost:5173').split(','),
+    origins: optional('CORS_ORIGINS', 'http://localhost:3000').split(','),
   },
 };
 

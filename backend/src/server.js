@@ -11,9 +11,48 @@ let server;
 const start = async () => {
   try {
 
-    // Connect database
-    await db.healthCheck();
-    logger.info('PostgreSQL connected');
+    // Backend simulation does not strictly require the Postgres DB.
+    // Bypassing DB start.
+    // await db.healthCheck();
+    // logger.info('PostgreSQL connected');
+
+    // Start Trade Orchestrator
+    const orchestrator = require('./trade_orchestrator');
+    const nseEngine = require('./nse_engine');
+    const bseEngine = require('./bse_engine');
+    orchestrator.start();
+
+    // SSE Endpoint for Live Feed
+    app.get('/api/events', (req, res) => {
+        res.setHeader('Content-Type', 'text/event-stream');
+        res.setHeader('Cache-Control', 'no-cache');
+        res.setHeader('Connection', 'keep-alive');
+        // Let cors middleware handle origin or override just to be safe
+        res.setHeader('Access-Control-Allow-Origin', '*'); 
+        res.flushHeaders();
+
+        const sendEvent = (type, data) => {
+            res.write(`event: ${type}\n`);
+            res.write(`data: ${JSON.stringify(data)}\n\n`);
+        };
+
+        const onNseTrade = (t) => sendEvent('nse_trade', t);
+        const onBseTrade = (t) => sendEvent('bse_trade', t);
+        const onArbitrage = (data) => sendEvent('arbitrage', data);
+        const onSettlement = (data) => sendEvent('settlement', data);
+        
+        nseEngine.on('trade', onNseTrade);
+        bseEngine.on('trade', onBseTrade);
+        orchestrator.on('arbitrage', onArbitrage);
+        orchestrator.on('settlement', onSettlement);
+
+        req.on('close', () => {
+            nseEngine.removeListener('trade', onNseTrade);
+            bseEngine.removeListener('trade', onBseTrade);
+            orchestrator.removeListener('arbitrage', onArbitrage);
+            orchestrator.removeListener('settlement', onSettlement);
+        });
+    });
 
     // Start HTTP server
     server = app.listen(env.PORT, () => {
