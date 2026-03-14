@@ -1,4 +1,4 @@
-InstantSettleX ⚡
+InstantSettleX
 
 Atomic Blockchain Settlement for Securities Trading
 
@@ -45,8 +45,6 @@ Funds and securities remain locked during the settlement window.
 4. Operational Costs
 
 Multiple intermediaries increase reconciliation overhead.
-
-
 
 
 
@@ -244,6 +242,17 @@ InstantSettleX
 ├── package.json
 └── README.md
 
+Images
+
+![image alt](https://github.com/Saiesh0007/InstantSettleX/blob/0891618221e4e2f51a17e40a7bf370d762cc604c/1.PNG)
+![image alt](https://github.com/Saiesh0007/InstantSettleX/blob/0891618221e4e2f51a17e40a7bf370d762cc604c/2.PNG)
+![image alt](https://github.com/Saiesh0007/InstantSettleX/blob/0891618221e4e2f51a17e40a7bf370d762cc604c/3.PNG)
+![image alt](https://github.com/Saiesh0007/InstantSettleX/blob/0891618221e4e2f51a17e40a7bf370d762cc604c/4.PNG)
+![image alt](https://github.com/Saiesh0007/InstantSettleX/blob/0891618221e4e2f51a17e40a7bf370d762cc604c/5.PNG)
+![image alt](https://github.com/Saiesh0007/InstantSettleX/blob/0891618221e4e2f51a17e40a7bf370d762cc604c/6.PNG)
+![image alt](https://github.com/Saiesh0007/InstantSettleX/blob/0891618221e4e2f51a17e40a7bf370d762cc604c/7.PNG)
+
+---
 
 ---
 
@@ -404,28 +413,7 @@ Switches network if needed
 
 ---
 
-Executing a Trade
-
-Example flow:
-
-User selects stock
-↓
-Enter quantity
-↓
-Execute trade
-↓
-Transaction sent to smart contract
-↓
-Atomic settlement executed
-
-Transaction hash appears in UI and can be viewed on:
-
-Etherscan.
-
-
----
-
-Settlement Lifecycle
+Executing a Trade:
 
 Trade Initiated
      │
@@ -536,17 +524,6 @@ Counterparty Risk	High	None
 Intermediaries	Many	Minimal
 Operational Costs	High	Reduced
 
-Images
-
-![image alt](https://github.com/Saiesh0007/InstantSettleX/blob/0891618221e4e2f51a17e40a7bf370d762cc604c/1.PNG)
-![image alt](https://github.com/Saiesh0007/InstantSettleX/blob/0891618221e4e2f51a17e40a7bf370d762cc604c/2.PNG)
-![image alt](https://github.com/Saiesh0007/InstantSettleX/blob/0891618221e4e2f51a17e40a7bf370d762cc604c/3.PNG)
-![image alt](https://github.com/Saiesh0007/InstantSettleX/blob/0891618221e4e2f51a17e40a7bf370d762cc604c/4.PNG)
-![image alt](https://github.com/Saiesh0007/InstantSettleX/blob/0891618221e4e2f51a17e40a7bf370d762cc604c/5.PNG)
-![image alt](https://github.com/Saiesh0007/InstantSettleX/blob/0891618221e4e2f51a17e40a7bf370d762cc604c/6.PNG)
-![image alt](https://github.com/Saiesh0007/InstantSettleX/blob/0891618221e4e2f51a17e40a7bf370d762cc604c/7.PNG)
-
----
 
 License
 
